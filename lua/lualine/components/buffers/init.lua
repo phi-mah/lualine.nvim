@@ -80,11 +80,40 @@ function M:new_buffer(bufnr, buf_index)
   }
 end
 
+
+local log = function(message)
+    local log_file_path = 'lualine.log'
+    local log_file = io.open(log_file_path, "a")
+    io.output(log_file)
+    io.write(message.."\n")
+    io.close(log_file)
+end
+
+
+function M:buffer_filter(bufno)
+
+	local tabno = vim.fn.tabpagenr()
+
+	local tabcwd = vim.fn.getcwd(-1, tabno)
+	local bufpath = vim.fn.expand("#" .. bufno .. ":p") or ""
+
+	--log(tabcwd .. "<->" .. bufpath .. (string.sub(bufpath, 1, #tabcwd) == tabcwd and "✓" or "✗"))
+
+	return (
+		string.sub(bufpath, 1, #tabcwd) == tabcwd
+	)	
+end
+
+
+
 function M:buffers()
   local buffers = {}
   M.bufpos2nr = {}
   for b = 1, vim.fn.bufnr('$') do
-    if vim.fn.buflisted(b) ~= 0 and vim.api.nvim_buf_get_option(b, 'buftype') ~= 'quickfix' then
+    if vim.fn.buflisted(b) ~= 0 
+		and vim.api.nvim_buf_get_option(b, 'buftype') ~= 'quickfix' 
+		and self:buffer_filter(b)
+	then
       buffers[#buffers + 1] = self:new_buffer(b, #buffers + 1)
       M.bufpos2nr[#buffers] = b
     end
